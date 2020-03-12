@@ -25,7 +25,11 @@ session.headers.update({
     "Authorization" : "token {0}".format(gitea_token),
 })
 
+# The following users and orgs will be mirrorered
 users_and_orgs = [gitea_user]
+
+# Ask to remove repositories that "should not be mirrored" but are
+prune = False
 
 github_username = os.environ.get("GITHUB_USER", "balkian")
 github_token = os.environ.get("GITHUB_TOKEN") or open(os.path.expanduser(".github-token")).read().strip()
@@ -45,7 +49,10 @@ for repo in gh.get_user().get_repos():
 
             r = session.get("{0}/repos/{1}/{2}".format(gitea_url, gitea_user, real_repo))
             if r.status_code == 200:
-                resp = input('repo exists. Remove? [y/N]')
+                print('*** repo exists: {0}/{2}'.format(gitea_user, real_repo))
+                if not prune:
+                    continue
+                resp = input('\tRemove? [y/N]')
                 if resp.lower() in ['y', 'yes']:
                     r = session.delete("{0}/repos/{1}/{2}".format(gitea_url, gitea_user, real_repo))
                     if r.status_code not in [200, 204]:
